@@ -11,24 +11,30 @@ pipeline {
 
         stage('Set Up Python') {
             steps {
-                sh '''
-                    sudo apt install python3.12-venv
-                    sudo apt update
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install flask
-                '''
+                script {
+                    // Ensure Python 3 and pip are installed
+                    sh '''
+                        sudo apt update
+                        sudo apt install -y python3 python3-pip python3-venv
+                        python3 -m venv venv
+                        . venv/bin/activate
+                        pip install flask
+                    '''
+                }
             }
         }
 
         stage('Run Flask App') {
             steps {
-                sh '''
-                    export JENKINS_NODE_COOKIE=dontKillMe
-                    . venv/bin/activate
-                    nohup python3 app.py > app.log 2>&1 &
-                '''
+                script {
+                    // Ensure the Flask app runs as a background process
+                    sh '''
+                        export JENKINS_NODE_COOKIE=dontKillMe
+                        . venv/bin/activate
+                        nohup python3 app.py > app.log 2>&1 &
+                    '''
+                }
             }
-        }
-    }
+        }
+    }
 }
