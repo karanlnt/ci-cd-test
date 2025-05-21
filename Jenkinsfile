@@ -1,31 +1,51 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "ci-cd-test"
+        CONTAINER_NAME = "ci-cd-test"
+        APP_DIR = "ci-cd-test"
+        GIT_REPO = "https://github.com/AdminVelesium/ci-cd-test"
+    }
+
     stages {
-        stage('Clone Repo') {
-            steps {
-                echo 'Cloning repo...'
-                checkout scm
-            }
-        }
-
-        stage('Set Up Python') {
+        stage('Prepare Directory') {
             steps {
                 sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install flask
+                    rm -rf $APP_DIR
+                    mkdir -p $APP_DIR
                 '''
             }
         }
 
-        stage('Run Flask App') {
+        stage('Clone Repository') {
+            steps {
+                dir("$APP_DIR") {
+                    git credentialsId: 'AdminVelesium', url: "$GIT_REPO", branch: 'main'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir("$APP_DIR") {
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
+            }
+        }
+
+        stage('Stop & Remove Existing Container') {
             steps {
                 sh '''
-                    export JENKINS_NODE_COOKIE=dontKillMe
-                    . venv/bin/activate
-                    nohup python3 app.py > app.log 2>&1 &
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
                 '''
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
             }
         }
     }
