@@ -21,7 +21,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 dir("$APP_DIR") {
-                    git credentialsId: 'AdminVelesium', url: "$GIT_REPO", branch: 'main'
+                    git branch: 'main', credentialsId: 'e90f8a68-032a-495b-8049-16a9162f072e', url: 'https://github.com/karanlnt/ci-cd-test.git'
                 }
             }
         }
