@@ -25,7 +25,7 @@ pipeline {
                 }
             }
         }
-
+    
         stage('Build Docker Image') {
             steps {
                 dir("$APP_DIR") {
@@ -34,19 +34,34 @@ pipeline {
             }
         }
 
-        stage('Stop & Remove Existing Container') {
+        stage('Reload and Restart systemd Service') {
             steps {
                 sh '''
-                    docker stop $CONTAINER_NAME || true
-                    docker rm $CONTAINER_NAME || true
+                    echo "Stopping old service (if running)..."
+                    sudo systemctl stop $CONTAINER_NAME || true
+
+                    echo "Reloading systemd daemon..."
+                    sudo systemctl daemon-reload
+
+                    echo "Starting service..."
+                    sudo systemctl start $CONTAINER_NAME
+
+                    echo "Service status:"
+                    sudo systemctl status $CONTAINER_NAME --no-pager
                 '''
             }
         }
-
-        stage('Run Container') {
-            steps {
-                sh 'docker run -d -p 5000:5000 --name $CONTAINER_NAME $IMAGE_NAME'
-            }
-        }
     }
+
+    post {
+        failure {
+            echo 'Pipeline failed.'
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+    }
 }
+
+
+
