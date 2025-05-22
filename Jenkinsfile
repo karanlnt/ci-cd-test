@@ -25,7 +25,7 @@ pipeline {
                 }
             }
         }
-    
+
         stage('Build Docker Image') {
             steps {
                 dir("$APP_DIR") {
@@ -59,9 +59,6 @@ pipeline {
         }
         success {
             echo 'Deployment successful!'
-        }
-    }
+        }
+    }
 }
-
-
-
